@@ -8,8 +8,9 @@
 import UIKit
 import CoreML
 import Vision
+import PhotosUI
 
-class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate{
     
     @IBOutlet weak var imageView: UIImageView!
     
@@ -24,6 +25,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             imagePicker.sourceType = UIImagePickerController.SourceType.camera
         } else{
             print("camera not available on this device")
+            pickImageFromPhotoLibrary()
         }
         
         
@@ -45,6 +47,30 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     @IBAction func cameraTapped(_ sender: UIBarButtonItem) {
         present(imagePicker, animated: true, completion: nil)
         
+    }
+    
+    func pickImageFromPhotoLibrary() -> Void {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = PHPickerFilter.images
+        
+        let pickerViewController = PHPickerViewController(configuration: config)
+        pickerViewController.delegate = self
+        self.present(pickerViewController, animated: true)
+    }
+    
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        for result in results {
+            result.itemProvider.loadObject(ofClass: UIImage.self, completionHandler: { (object, error) in
+                 if let image = object as? UIImage {
+                    DispatchQueue.main.async {
+                       // Use UIImage
+                        self.imageView.image = image
+                       print("Selected image: \(image)")
+                    }
+                 }
+            })
+        }
     }
     
 }
