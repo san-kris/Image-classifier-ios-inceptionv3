@@ -67,10 +67,46 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
                        // Use UIImage
                         self.imageView.image = image
                        print("Selected image: \(image)")
+                        self.detect(image: image)
                     }
                  }
             })
         }
+        picker.dismiss(animated: true)
+    }
+    
+    func detect(image: UIImage) -> Void {
+        // Create a CIImage object from the user selected image
+        guard let ciImage = CIImage(image: image) else{
+            print("unable to creaate CI Image")
+            return
+        }
+        // create an instance of Inceptionv3 ML Model
+        guard let model = try? VNCoreMLModel(for: Inceptionv3().model) else{
+            print("unable to load Inceptionv3 moodel in ML Container")
+            return
+        }
+        
+        let request = VNCoreMLRequest(model: model) { (request, error) in
+            guard let result = request.results as? [VNClassificationObservation] else{
+                print("Model failed to process image")
+                return
+            }
+            // print(result)
+            if let firstResult = result.first{
+                self.navigationItem.title = firstResult.identifier
+                print(firstResult.identifier)
+            }
+        }
+        
+        let handler = VNImageRequestHandler(ciImage: ciImage)
+        
+        do{
+            try handler.perform([request])
+        } catch {
+            print("Error performing ML \(error)")
+        }
+        
     }
     
 }
